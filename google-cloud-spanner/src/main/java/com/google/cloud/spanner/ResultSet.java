@@ -82,4 +82,8 @@ public interface ResultSet extends AutoCloseable, StructReader {
   default ResultSetMetadata getMetadata() {
     throw new UnsupportedOperationException("Method should be overridden");
   }
+
+  default boolean initiateStreaming(AsyncResultSet.StreamListener streamListener) {
+    return false;
+  }
 }

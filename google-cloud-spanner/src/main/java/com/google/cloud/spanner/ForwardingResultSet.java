@@ -102,4 +102,9 @@ public class ForwardingResultSet extends ForwardingStructReader implements Proto
   public ResultSetMetadata getMetadata() {
     return delegate.get().getMetadata();
   }
+
+  @Override
+  public boolean initiateStreaming(AsyncResultSet.StreamListener streamListener) {
+    return delegate.get().initiateStreaming(streamListener);
+  }
 }

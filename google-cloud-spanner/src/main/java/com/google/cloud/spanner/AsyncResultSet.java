@@ -223,4 +223,8 @@ public interface AsyncResultSet extends ResultSet {
    * @param transformer function which will be used to transform the row. It should not return null.
    */
   <T> List<T> toList(Function<StructReader, T> transformer) throws SpannerException;
+
+  interface StreamListener {
+    void onMessage();
+  }
 }

@@ -196,7 +196,8 @@ abstract class ResumableStreamIterator extends AbstractIterator<PartialResultSet
     }
   }
 
-  abstract CloseableIterator<PartialResultSet> startStream(@Nullable ByteString resumeToken);
+  abstract CloseableIterator<PartialResultSet> startStream(@Nullable ByteString resumeToken,
+                                                           AsyncResultSet.StreamListener streamListener);
 
   /**
    * Prepares the iterator for a retry on a different gRPC channel. Returns true if that is
@@ -221,22 +222,18 @@ abstract class ResumableStreamIterator extends AbstractIterator<PartialResultSet
   }
 
   @Override
+  public boolean initiateStreaming(AsyncResultSet.StreamListener streamListener) {
+    eagerStartStreaming(streamListener);
+    return true;
+  }
+
+  @Override
   protected PartialResultSet computeNext() {
     int numAttemptsOnOtherChannel = 0;
     Context context = Context.current();
     while (true) {
       // Eagerly start stream before consuming any buffered items.
-      if (stream == null) {
-        span.addAnnotation(
-            "Starting/Resuming stream",
-            "ResumeToken",
-            resumeToken == null ? "null" : resumeToken.toStringUtf8());
-        try (IScope scope = tracer.withSpan(span)) {
-          // When start a new stream set the Span as current to make the gRPC Span a child of
-          // this Span.
-          stream = checkNotNull(startStream(resumeToken));
-        }
-      }
+      eagerStartStreaming(null);
       // Buffer contains items up to a resume token or has reached capacity: flush.
       if (!buffer.isEmpty()
           && (finished || !safeToRetry || !buffer.getLast().getResumeToken().isEmpty())) {
@@ -311,6 +308,20 @@ abstract class ResumableStreamIterator extends AbstractIterator<PartialResultSet
         span.addAnnotation("Stream broken. Not safe to retry", e);
         span.setStatus(e);
         throw e;
+      }
+    }
+  }
+
+  private void eagerStartStreaming(AsyncResultSet.StreamListener streamListener) {
+    if (stream == null) {
+      span.addAnnotation(
+              "Starting/Resuming stream",
+              "ResumeToken",
+              resumeToken == null ? "null" : resumeToken.toStringUtf8());
+      try (IScope scope = tracer.withSpan(span)) {
+        // When start a new stream set the Span as current to make the gRPC Span a child of
+        // this Span.
+        stream = checkNotNull(startStream(resumeToken, streamListener));
       }
     }
   }

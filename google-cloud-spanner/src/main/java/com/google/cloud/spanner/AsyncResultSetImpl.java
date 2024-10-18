@@ -18,7 +18,6 @@ package com.google.cloud.spanner;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
-import com.google.api.core.ListenableFutureToApiFuture;
 import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.core.ExecutorProvider;
 import com.google.cloud.spanner.AbstractReadContext.ListenableAsyncResultSet;
@@ -45,7 +44,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /** Default implementation for {@link AsyncResultSet}. */
-class AsyncResultSetImpl extends ForwardingStructReader implements ListenableAsyncResultSet {
+class AsyncResultSetImpl extends ForwardingStructReader implements ListenableAsyncResultSet, AsyncResultSet.StreamListener {
   private static final Logger log = Logger.getLogger(AsyncResultSetImpl.class.getName());
 
   /** State of an {@link AsyncResultSetImpl}. */
@@ -120,7 +119,7 @@ class AsyncResultSetImpl extends ForwardingStructReader implements ListenableAsy
    */
   private volatile boolean finished;
 
-  private volatile ApiFuture<Void> result;
+  private volatile SettableApiFuture<Void> result;
 
   /**
    * This variable indicates whether {@link #tryNext()} has returned {@link CursorState#DONE} or a
@@ -410,13 +409,16 @@ class AsyncResultSetImpl extends ForwardingStructReader implements ListenableAsy
         }
         synchronized (monitor) {
           if (executionException != null) {
+            result.setException(executionException);
             throw executionException;
           }
           if (state == State.CANCELLED) {
+            result.setException(CANCELLED_EXCEPTION);
             throw CANCELLED_EXCEPTION;
           }
         }
       }
+      result.set(null);
       return null;
     }
 
@@ -458,14 +460,20 @@ class AsyncResultSetImpl extends ForwardingStructReader implements ListenableAsy
           this.state == State.INITIALIZED, "callback may not be set multiple times");
 
       // Start to fetch data and buffer these.
-      this.result =
-          new ListenableFutureToApiFuture<>(this.service.submit(new ProduceRowsCallable()));
+      this.result = SettableApiFuture.create();
+      if(!initiateStreaming(this)) {
+        initiateCallBack();
+      }
       this.executor = MoreExecutors.newSequentialExecutor(Preconditions.checkNotNull(exec));
       this.callback = Preconditions.checkNotNull(cb);
-      this.state = State.RUNNING;
       pausedLatch.countDown();
       return result;
     }
+  }
+
+  private void initiateCallBack() {
+    this.service.submit(new ProduceRowsCallable());
+    this.state = State.RUNNING;
   }
 
   Future<Void> getResult() {
@@ -579,6 +587,11 @@ class AsyncResultSetImpl extends ForwardingStructReader implements ListenableAsy
   }
 
   @Override
+  public boolean initiateStreaming(StreamListener streamListener) {
+    return delegateResultSet.get().initiateStreaming(streamListener);
+  }
+
+  @Override
   protected void checkValidState() {
     synchronized (monitor) {
       Preconditions.checkState(
@@ -592,5 +605,14 @@ class AsyncResultSetImpl extends ForwardingStructReader implements ListenableAsy
   public Struct getCurrentRowAsStruct() {
     checkValidState();
     return currentRow;
+  }
+
+  @Override
+  public void onMessage() {
+    synchronized (monitor) {
+      if(state == State.INITIALIZED) {
+        initiateCallBack();
+      }
+    }
   }
 }

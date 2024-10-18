@@ -124,6 +124,11 @@ class GrpcResultSet extends AbstractResultSet<List<Object>> implements ProtobufR
   }
 
   @Override
+  public boolean initiateStreaming(AsyncResultSet.StreamListener streamListener) {
+    return iterator.initiateStreaming(streamListener);
+  }
+
+  @Override
   public void close() {
     synchronized (this) {
       if (closed) {

@@ -876,7 +876,7 @@ public class SessionPoolOptions {
     }
 
     @VisibleForTesting
-    Builder setFailOnSessionLeak() {
+    public Builder setFailOnSessionLeak() {
       this.actionOnSessionLeak = ActionOnSessionLeak.FAIL;
       return this;
     }
