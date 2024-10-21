@@ -18,6 +18,8 @@ package com.google.cloud.spanner;
 
 import com.google.api.core.ApiFuture;
 import com.google.common.base.Function;
+import com.google.spanner.v1.PartialResultSet;
+
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -225,6 +227,10 @@ public interface AsyncResultSet extends ResultSet {
   <T> List<T> toList(Function<StructReader, T> transformer) throws SpannerException;
 
   interface StreamListener {
-    void onMessage();
+    void onMessage(boolean emptyResumeToken, boolean isEndOfStream, StreamRequestor streamRequestor);
+  }
+
+  interface StreamRequestor {
+    void onStreamRequest(int numOfMessages);
   }
 }

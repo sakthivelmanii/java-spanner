@@ -28,6 +28,7 @@ import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.spanner.v1.PartialResultSet;
 import com.google.spanner.v1.ResultSetMetadata;
 import com.google.spanner.v1.ResultSetStats;
 
@@ -47,6 +48,7 @@ import java.util.logging.Logger;
 /** Default implementation for {@link AsyncResultSet}. */
 class AsyncResultSetImpl extends ForwardingStructReader implements ListenableAsyncResultSet, AsyncResultSet.StreamListener {
   private static final Logger log = Logger.getLogger(AsyncResultSetImpl.class.getName());
+
 
   /** State of an {@link AsyncResultSetImpl}. */
   private enum State {
@@ -625,10 +627,15 @@ class AsyncResultSetImpl extends ForwardingStructReader implements ListenableAsy
   }
 
   @Override
-  public void onMessage() {
+  public void onMessage(
+      boolean emptyResumeToken, boolean isEndOfStream, StreamRequestor streamRequestor) {
     synchronized (monitor) {
-      if(state == State.IN_PROGRESS) {
-        initiateCallBack();
+      if (state == State.IN_PROGRESS) {
+        if (emptyResumeToken && !isEndOfStream) {
+          streamRequestor.onStreamRequest(1);
+        } else {
+          initiateCallBack();
+        }
       }
     }
   }
