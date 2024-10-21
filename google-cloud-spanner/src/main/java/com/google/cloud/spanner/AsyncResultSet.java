@@ -227,7 +227,7 @@ public interface AsyncResultSet extends ResultSet {
   <T> List<T> toList(Function<StructReader, T> transformer) throws SpannerException;
 
   interface StreamListener {
-    void onMessage(boolean emptyResumeToken, boolean isEndOfStream, StreamRequestor streamRequestor);
+    void onMessage(PartialResultSet partialResultSet, int prefetchChunks, int currentBufferSize, StreamRequestor streamRequestor);
   }
 
   interface StreamRequestor {

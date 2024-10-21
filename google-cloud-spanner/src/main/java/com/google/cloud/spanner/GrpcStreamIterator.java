@@ -38,12 +38,13 @@ import java.util.logging.Logger;
 class GrpcStreamIterator extends AbstractIterator<PartialResultSet>
     implements CloseableIterator<PartialResultSet>, AsyncResultSet.StreamRequestor {
   private static final Logger logger = Logger.getLogger(GrpcStreamIterator.class.getName());
-  private static final PartialResultSet END_OF_STREAM = PartialResultSet.newBuilder().build();
+  public static final PartialResultSet END_OF_STREAM = PartialResultSet.newBuilder().build();
   private AsyncResultSet.StreamListener streamListener;
 
   private final ConsumerImpl consumer;
   private final BlockingQueue<PartialResultSet> stream;
   private final Statement statement;
+  private final int prefetchChunks;
 
   private SpannerRpc.StreamingCall call;
   private volatile boolean withBeginTransaction;
@@ -60,6 +61,7 @@ class GrpcStreamIterator extends AbstractIterator<PartialResultSet>
   GrpcStreamIterator(
       Statement statement, int prefetchChunks, boolean cancelQueryWhenClientIsClosed) {
     this.statement = statement;
+    this.prefetchChunks = prefetchChunks;
     this.consumer = new ConsumerImpl(cancelQueryWhenClientIsClosed);
     // One extra to allow for END_OF_STREAM message.
     this.stream = new LinkedBlockingQueue<>((prefetchChunks * 2) + 1);
@@ -197,6 +199,7 @@ class GrpcStreamIterator extends AbstractIterator<PartialResultSet>
   }
 
   private void onMessage(PartialResultSet partialResultSet) {
-    Optional.ofNullable(streamListener).ifPresent(sl -> sl.onMessage(partialResultSet.getResumeToken().isEmpty(),  partialResultSet == END_OF_STREAM, this));
+    Optional.ofNullable(streamListener).ifPresent(
+            sl -> sl.onMessage(partialResultSet, prefetchChunks, stream.size(), this));
   }
 }

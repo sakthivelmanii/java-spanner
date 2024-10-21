@@ -627,14 +627,17 @@ class AsyncResultSetImpl extends ForwardingStructReader implements ListenableAsy
   }
 
   @Override
-  public void onMessage(
-      boolean emptyResumeToken, boolean isEndOfStream, StreamRequestor streamRequestor) {
+  public void onMessage(PartialResultSet partialResultSet, int prefetchChunks, int currentBufferSize, StreamRequestor streamRequestor) {
     synchronized (monitor) {
       if (state == State.IN_PROGRESS) {
-        if (emptyResumeToken && !isEndOfStream) {
-          streamRequestor.onStreamRequest(1);
-        } else {
+        // if PartialResultSet contains resume token or buffer size is more than configured size or we have reached
+        // end of stream, we can start the thread
+        boolean startJobThread = !partialResultSet.getResumeToken().isEmpty()
+                || currentBufferSize > prefetchChunks || partialResultSet == GrpcStreamIterator.END_OF_STREAM;
+        if (startJobThread){
           initiateCallBack();
+        } else {
+          streamRequestor.onStreamRequest(1);
         }
       }
     }
