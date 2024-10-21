@@ -16,11 +16,6 @@
 
 package com.google.cloud.spanner;
 
-import static com.google.cloud.spanner.SpannerExceptionFactory.newSpannerException;
-import static com.google.cloud.spanner.SpannerExceptionFactory.newSpannerExceptionForCancellation;
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import com.google.api.client.util.BackOff;
 import com.google.api.client.util.ExponentialBackOff;
 import com.google.api.gax.grpc.GrpcStatusCode;
@@ -35,6 +30,8 @@ import com.google.protobuf.ByteString;
 import com.google.spanner.v1.PartialResultSet;
 import io.grpc.Context;
 import io.opentelemetry.api.common.Attributes;
+
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.Objects;
@@ -44,7 +41,11 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.annotation.Nullable;
+
+import static com.google.cloud.spanner.SpannerExceptionFactory.newSpannerException;
+import static com.google.cloud.spanner.SpannerExceptionFactory.newSpannerExceptionForCancellation;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Wraps an iterator over partial result sets, supporting resuming RPCs on error. This class keeps
@@ -58,6 +59,7 @@ abstract class ResumableStreamIterator extends AbstractIterator<PartialResultSet
   private static final RetrySettings DEFAULT_STREAMING_RETRY_SETTINGS =
       SpannerStubSettings.newBuilder().executeStreamingSqlSettings().getRetrySettings();
   private final ErrorHandler errorHandler;
+  private AsyncResultSet.StreamListener streamListener;
   private final RetrySettings streamingRetrySettings;
   private final Set<Code> retryableCodes;
   private static final Logger logger = Logger.getLogger(ResumableStreamIterator.class.getName());
@@ -223,7 +225,8 @@ abstract class ResumableStreamIterator extends AbstractIterator<PartialResultSet
 
   @Override
   public boolean initiateStreaming(AsyncResultSet.StreamListener streamListener) {
-    eagerStartStreaming(streamListener);
+    this.streamListener = streamListener;
+    eagerStartStreaming();
     return true;
   }
 
@@ -233,7 +236,7 @@ abstract class ResumableStreamIterator extends AbstractIterator<PartialResultSet
     Context context = Context.current();
     while (true) {
       // Eagerly start stream before consuming any buffered items.
-      eagerStartStreaming(null);
+      eagerStartStreaming();
       // Buffer contains items up to a resume token or has reached capacity: flush.
       if (!buffer.isEmpty()
           && (finished || !safeToRetry || !buffer.getLast().getResumeToken().isEmpty())) {
@@ -312,7 +315,7 @@ abstract class ResumableStreamIterator extends AbstractIterator<PartialResultSet
     }
   }
 
-  private void eagerStartStreaming(AsyncResultSet.StreamListener streamListener) {
+  private void eagerStartStreaming() {
     if (stream == null) {
       span.addAnnotation(
               "Starting/Resuming stream",

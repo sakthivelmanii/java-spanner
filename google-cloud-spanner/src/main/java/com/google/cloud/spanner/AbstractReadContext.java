@@ -965,6 +965,7 @@ abstract class AbstractReadContext
                                                           AsyncResultSet.StreamListener streamListener) {
             GrpcStreamIterator stream =
                 new GrpcStreamIterator(prefetchChunks, cancelQueryWhenClientIsClosed);
+            stream.registerListener(streamListener);
             TransactionSelector selector = null;
             if (resumeToken != null) {
               builder.setResumeToken(resumeToken);

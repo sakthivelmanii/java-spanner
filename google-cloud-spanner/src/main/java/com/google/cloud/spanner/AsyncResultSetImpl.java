@@ -30,6 +30,7 @@ import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.spanner.v1.ResultSetMetadata;
 import com.google.spanner.v1.ResultSetStats;
+
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -50,6 +51,7 @@ class AsyncResultSetImpl extends ForwardingStructReader implements ListenableAsy
   /** State of an {@link AsyncResultSetImpl}. */
   private enum State {
     INITIALIZED,
+    IN_PROGRESS,
     /** SYNC indicates that the {@link ResultSet} is used in sync pattern. */
     SYNC,
     CONSUMING,
@@ -451,6 +453,21 @@ class AsyncResultSetImpl extends ForwardingStructReader implements ListenableAsy
     }
   }
 
+  private class InitiateStreamingRunnable implements Runnable {
+
+    @Override
+    public void run() {
+      try {
+        if(!initiateStreaming(AsyncResultSetImpl.this)) {
+          initiateCallBack();
+        }
+      } catch (SpannerException e) {
+        executionException = e;
+        initiateCallBack();
+      }
+    }
+  }
+
   /** Sets the callback for this {@link AsyncResultSet}. */
   @Override
   public ApiFuture<Void> setCallback(Executor exec, ReadyCallback cb) {
@@ -461,9 +478,8 @@ class AsyncResultSetImpl extends ForwardingStructReader implements ListenableAsy
 
       // Start to fetch data and buffer these.
       this.result = SettableApiFuture.create();
-      if(!initiateStreaming(this)) {
-        initiateCallBack();
-      }
+      this.state = State.IN_PROGRESS;
+      this.service.execute(new InitiateStreamingRunnable());
       this.executor = MoreExecutors.newSequentialExecutor(Preconditions.checkNotNull(exec));
       this.callback = Preconditions.checkNotNull(cb);
       pausedLatch.countDown();
@@ -488,6 +504,7 @@ class AsyncResultSetImpl extends ForwardingStructReader implements ListenableAsy
           "cannot cancel a result set without a callback");
       state = State.CANCELLED;
       pausedLatch.countDown();
+      this.result.setException(CANCELLED_EXCEPTION);
     }
   }
 
@@ -610,7 +627,7 @@ class AsyncResultSetImpl extends ForwardingStructReader implements ListenableAsy
   @Override
   public void onMessage() {
     synchronized (monitor) {
-      if(state == State.INITIALIZED) {
+      if(state == State.IN_PROGRESS) {
         initiateCallBack();
       }
     }
