@@ -59,11 +59,11 @@ public class ITAsyncQueryTest {
         databaseClient = spanner.getDatabaseClient(DatabaseId.of("span-cloud-testing", "sakthi-spanner-testing", "testing-database"));
     }
 
-    @Test
+//    @Test
     public void setUpAndPopulateData() {
-        int base = 110000;
+        int base = 1210000;
         List<MutationGroup> mutationGroups = new ArrayList<>();
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < 2000; i++) {
             List<Mutation> mutations = new ArrayList<>();
             for (int j = 0; j < 100; j++) {
                 int id = base + (i * 100) + j;
@@ -141,13 +141,13 @@ public class ITAsyncQueryTest {
         AsyncResultSet asyncResultSet;
         ApiFuture<Void> res;
         try (ReadContext readContext = databaseClient.singleUse()) {
-            asyncResultSet = readContext.executeQueryAsync(Statement.of("SELECT * FROM Employees ORDER BY ID DESC"), Options.bufferRows(20));
+            asyncResultSet = readContext.executeQueryAsync(Statement.of("SELECT * FROM Employees ORDER BY ID DESC LIMIT 10000"), Options.bufferRows(20));
             res = asyncResultSet.setCallback(executor,
                     resultSet -> {
                         while (true) {
                             switch (resultSet.tryNext()) {
                                 case OK:
-//                                    System.out.println(version + "  " + resultSet.getCurrentRowAsStruct());
+//                                    System.out.println(resultSet.getCurrentRowAsStruct());
                                     rowCount.incrementAndGet();
                                     break;
                                 case DONE:
