@@ -34,13 +34,7 @@ import com.google.spanner.v1.ResultSetStats;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.BlockingDeque;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -338,7 +332,9 @@ class AsyncResultSetImpl extends ForwardingStructReader implements ListenableAsy
       boolean stop = false;
       boolean hasNext = false;
       try {
+        long before = System.nanoTime();
         hasNext = delegateResultSet.get().next();
+        System.out.println("Total time spent " + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - before));
       } catch (Throwable e) {
         synchronized (monitor) {
           executionException = SpannerExceptionFactory.asSpannerException(e);
