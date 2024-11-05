@@ -21,6 +21,7 @@ import com.google.cloud.spanner.AsyncResultSet;
 import com.google.cloud.spanner.DatabaseClient;
 import com.google.cloud.spanner.DatabaseId;
 import com.google.cloud.spanner.ReadContext;
+import com.google.cloud.spanner.ResultSet;
 import com.google.cloud.spanner.SessionPoolOptions;
 import com.google.cloud.spanner.Spanner;
 import com.google.cloud.spanner.SpannerOptions;
@@ -52,14 +53,25 @@ public class SpannerProfiler {
         spanner.getDatabaseClient(
             DatabaseId.of("span-cloud-testing", "sakthi-spanner-testing", "testing-database"));
 
-    ApiFuture<Void> r1 =
-        triggerQuery(databaseClient, executor, "SELECT ID,NAME FROM Employees LIMIT 100");
-    r1.get();
+    //    ApiFuture<Void> r1 =
+    //        triggerQueryAsync(databaseClient, executor, "SELECT ID,NAME FROM Employees LIMIT
+    // 100");
+    //    r1.get();
+
+    triggerQuery(databaseClient, "SELECT ID,NAME FROM Employees LIMIT 100");
     spanner.close();
-    System.exit(0);
   }
 
-  public static ApiFuture<Void> triggerQuery(
+  public static void triggerQuery(DatabaseClient databaseClient, String query) {
+    try (ReadContext readContext = databaseClient.singleUse()) {
+      ResultSet resultSet = readContext.executeQueryAsync(Statement.of(query));
+      while (resultSet.next()) {
+        System.out.println(resultSet.getCurrentRowAsStruct());
+      }
+    }
+  }
+
+  public static ApiFuture<Void> triggerQueryAsync(
       DatabaseClient databaseClient, Executor executor, String query) {
     AsyncResultSet asyncResultSet;
     ApiFuture<Void> res;
