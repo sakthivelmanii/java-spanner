@@ -34,7 +34,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <junixsocket.version>2.10.1</junixsocket.version>
-    <opentelemetry.version>1.43.0</opentelemetry.version>
+    <opentelemetry.version>1.42.1</opentelemetry.version>
   </properties>
 
   <dependencies>
@@ -49,12 +49,17 @@
     <dependency>
       <groupId>com.google.cloud.opentelemetry</groupId>
       <artifactId>exporter-trace</artifactId>
-      <version>0.33.0</version>
+      <version>0.32.0</version>
     </dependency>
     <dependency>
       <groupId>com.google.cloud.opentelemetry</groupId>
       <artifactId>exporter-metrics</artifactId>
-      <version>0.33.0</version>
+      <version>0.32.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.cloud</groupId>
+      <artifactId>google-cloud-monitoring</artifactId>
+      <version>3.53.0</version>
     </dependency>
     <!-- OpenTelemetry test dependencies -->
     <dependency>
@@ -92,7 +97,7 @@
     <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-spanner</artifactId>
-      <version>6.79.0</version>
+      <version>6.81.0</version>
     </dependency>
     <dependency>
       <groupId>commons-cli</groupId>
@@ -135,8 +140,7 @@
         <artifactId>exec-maven-plugin</artifactId>
         <version>3.5.0</version>
         <configuration>
-          <mainClass>com.google.cloud.spanner.benchmark.LatencyBenchmark</mainClass>
-          <cleanupDaemonThreads>false</cleanupDaemonThreads>
+          <mainClass>com.google.cloud.spanner.profiling.SpannerProfiler</mainClass>
         </configuration>
       </plugin>
       <plugin>
