@@ -26,6 +26,7 @@ import com.google.cloud.spanner.SessionPoolOptions;
 import com.google.cloud.spanner.Spanner;
 import com.google.cloud.spanner.SpannerOptions;
 import com.google.cloud.spanner.Statement;
+import com.google.common.base.Stopwatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -57,8 +58,9 @@ public class SpannerProfiler {
     //        triggerQueryAsync(databaseClient, executor, "SELECT ID,NAME FROM Employees LIMIT
     // 100");
     //    r1.get();
-
+    Stopwatch stopwatch = Stopwatch.createStarted();
     triggerQuery(databaseClient, "SELECT ID,NAME FROM Employees LIMIT 100");
+    System.out.println("Total time spent " + stopwatch.elapsed().toMillis());
     spanner.close();
   }
 
