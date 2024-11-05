@@ -141,6 +141,9 @@
         <version>3.5.0</version>
         <configuration>
           <mainClass>com.google.cloud.spanner.profiling.SpannerProfiler</mainClass>
+          <arguments>
+            <argument>-agentpath:/opt/cprof/profiler_java_agent.so=-cprof_service=spanner-sakthi-testing,-cprof_enable_heap_sampling=true</argument>
+          </arguments>
         </configuration>
       </plugin>
       <plugin>
