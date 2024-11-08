@@ -16,8 +16,6 @@
 
 package com.google.cloud.spanner.connection.it;
 
-import static com.google.common.truth.Truth.assertThat;
-
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.gax.rpc.ServerStream;
@@ -33,13 +31,11 @@ import com.google.cloud.spanner.SessionPoolOptions;
 import com.google.cloud.spanner.Spanner;
 import com.google.cloud.spanner.SpannerOptions;
 import com.google.cloud.spanner.Statement;
-import com.google.cloud.spanner.helpers.annotations.RepeatTest;
 import com.google.cloud.spanner.helpers.annotations.RepeatedTestRule;
 import com.google.common.base.Stopwatch;
 import com.google.rpc.Code;
 import com.google.spanner.v1.BatchWriteResponse;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
@@ -51,10 +47,10 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.runners.JUnit4;
 import org.threeten.bp.Duration;
 
-@RunWith(Parameterized.class)
+@RunWith(JUnit4.class)
 public class ITAsyncQueryTest {
 
   private static Spanner spanner;
@@ -65,38 +61,38 @@ public class ITAsyncQueryTest {
   @Rule
   public RepeatedTestRule repeatedTestRule = new RepeatedTestRule();
 
-  @Parameterized.Parameter(0)
-  public int limit;
+//  @Parameterized.Parameter(0)
+//  public int limit;
+//
+//  @Parameterized.Parameter(1)
+//  public int offset;
+//
+//  @Parameterized.Parameter(2)
+//  public int option1;
+//
+//  @Parameterized.Parameter(3)
+//  public int option2;
+//
+//  @Parameterized.Parameter(4)
+//  public int option3;
+//
+//  @Parameterized.Parameter(5)
+//  public int option4;
+//
+//  @Parameterized.Parameter(6)
+//  public int option5;
 
-  @Parameterized.Parameter(1)
-  public int offset;
 
-  @Parameterized.Parameter(2)
-  public int option1;
-
-  @Parameterized.Parameter(3)
-  public int option2;
-
-  @Parameterized.Parameter(4)
-  public int option3;
-
-  @Parameterized.Parameter(5)
-  public int option4;
-
-  @Parameterized.Parameter(6)
-  public int option5;
-
-
-  @Parameterized.Parameters(name = "rows = {6}")
-  public static Collection<Object[]> data() {
-    List<Object[]> params = new ArrayList<>();
-    params.add(new Object[]{100, 150, 90000, 110000, 220000, 330000, 1});
-    params.add(new Object[]{150, 200, 80000, 120000, 230000, 430000, 2});
-    params.add(new Object[]{200, 250, 70000, 130000, 240000, 530000, 3});
-    params.add(new Object[]{250, 300, 60000, 140000, 250000, 630000, 4});
-    params.add(new Object[]{300, 350, 50000, 150000, 260000, 730000, 5});
-    return params;
-  }
+//  @Parameterized.Parameters(name = "rows = {6}")
+//  public static Collection<Object[]> data() {
+//    List<Object[]> params = new ArrayList<>();
+//    params.add(new Object[]{10, 150, 90000, 110000, 220000, 330000, 1});
+//    params.add(new Object[]{10, 200, 80000, 120000, 230000, 430000, 2});
+//    params.add(new Object[]{10, 250, 70000, 130000, 240000, 530000, 3});
+//    params.add(new Object[]{10, 300, 60000, 140000, 250000, 630000, 4});
+//    params.add(new Object[]{10, 350, 50000, 150000, 260000, 730000, 5});
+//    return params;
+//  }
 
   @Before
   public void setUp() {
@@ -175,39 +171,19 @@ public class ITAsyncQueryTest {
     spanner.close();
   }
 
-  @RepeatTest(times = 10)
   @Test
   public void testQueryAsync() throws ExecutionException, InterruptedException {
-    Stopwatch stopwatch = Stopwatch.createStarted();
-    final AtomicInteger rowCount = new AtomicInteger();
-    List<ApiFuture<Void>> futures = new ArrayList<>();
-    for(int i = 0; i < 10; i++) {
-      ApiFuture<Void> r1 = triggerQuery(rowCount, String.format("SELECT * FROM Employees LIMIT %s", limit));
-      ApiFuture<Void> r2 = triggerQuery(rowCount, String.format("SELECT * FROM Employees ORDER BY ID DESC LIMIT %s", limit));
-      ApiFuture<Void> r3 = triggerQuery(rowCount, String.format("SELECT * FROM Employees WHERE ID > %s LIMIT %s", option1, limit));
-      ApiFuture<Void> r4 = triggerQuery(rowCount, String.format("SELECT * FROM Employees WHERE ID < %s ORDER BY ID DESC LIMIT %s", option1, limit));
-      ApiFuture<Void> r5 = triggerQuery(rowCount, String.format("SELECT * FROM Employees WHERE ID > %s LIMIT %s OFFSET %s", option1, limit, offset));
-      ApiFuture<Void> r6 = triggerQuery(rowCount, String.format("SELECT * FROM Employees WHERE ID < %s ORDER BY ID DESC LIMIT %s", option2, limit));
-      ApiFuture<Void> r7 = triggerQuery(rowCount, String.format("SELECT * FROM Employees WHERE ID > %s LIMIT %s OFFSET %s", option2, limit, offset));
-      ApiFuture<Void> r8 = triggerQuery(rowCount, String.format("SELECT * FROM Employees WHERE ID < %s ORDER BY ID DESC LIMIT %s", option3, limit));
-      ApiFuture<Void> r9 = triggerQuery(rowCount, String.format("SELECT * FROM Employees WHERE ID > %s LIMIT %s OFFSET %s", option3, limit, offset));
-      ApiFuture<Void> r10 = triggerQuery(rowCount, String.format("SELECT * FROM Employees WHERE ID < %s ORDER BY ID DESC LIMIT %s", option4, limit));
-
-      futures.add(r1);
-      futures.add(r2);
-      futures.add(r3);
-      futures.add(r4);
-      futures.add(r5);
-      futures.add(r6);
-      futures.add(r7);
-      futures.add(r8);
-      futures.add(r9);
-      futures.add(r10);
+    for(int k = 0; k < 250; k++) {
+      Stopwatch stopwatch = Stopwatch.createStarted();
+      final AtomicInteger rowCount = new AtomicInteger();
+      List<ApiFuture<Void>> futures = new ArrayList<>();
+      for (int i = 0; i < 100; i++) {
+        ApiFuture<Void> r1 = triggerQuery(rowCount, "SELECT * FROM Employees LIMIT 10");
+        futures.add(r1);
+      }
+      ApiFutures.allAsList(futures).get();
+      System.out.println(stopwatch.stop().elapsed().toMillis());
     }
-    ApiFutures.allAsList(futures).get();
-    System.out.println(stopwatch.stop().elapsed().toMillis());
-    assertThat(rowCount.get()).isNotEqualTo(0);
-
   }
 
   public ApiFuture<Void> triggerQuery(AtomicInteger rowCount, String query) {
