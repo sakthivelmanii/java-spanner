@@ -36,8 +36,7 @@ import org.threeten.bp.Duration;
 
 public class SpannerProfiler {
 
-  public static void main(String[] args) throws ExecutionException, InterruptedException {
-
+  public static void main(String[] args) throws InterruptedException {
     Spanner spanner =
         SpannerOptions.newBuilder()
             .setProjectId("span-cloud-testing")
@@ -50,19 +49,14 @@ public class SpannerProfiler {
                     .build())
             .build()
             .getService();
-    ExecutorService executor = Executors.newScheduledThreadPool(10);
     DatabaseClient databaseClient =
         spanner.getDatabaseClient(
             DatabaseId.of("span-cloud-testing", "sakthi-spanner-testing", "testing-database"));
 
-    //    ApiFuture<Void> r1 =
-    //        triggerQueryAsync(databaseClient, executor, "SELECT ID,NAME FROM Employees LIMIT
-    // 100");
-    //    r1.get();
     Stopwatch stopwatch = Stopwatch.createStarted();
     triggerQuery(databaseClient, "SELECT ID,NAME FROM Employees LIMIT 100");
     System.out.println("Total time spent " + stopwatch.elapsed().toMillis());
-    TimeUnit.MINUTES.sleep(1);
+    TimeUnit.SECONDS.sleep(30);
     spanner.close();
   }
 
@@ -73,33 +67,5 @@ public class SpannerProfiler {
         System.out.println(resultSet.getCurrentRowAsStruct());
       }
     }
-  }
-
-  public static ApiFuture<Void> triggerQueryAsync(
-      DatabaseClient databaseClient, Executor executor, String query) {
-    AsyncResultSet asyncResultSet;
-    ApiFuture<Void> res;
-    try (ReadContext readContext = databaseClient.singleUse()) {
-      asyncResultSet = readContext.executeQueryAsync(Statement.of(query));
-      res =
-          asyncResultSet.setCallback(
-              executor,
-              resultSet -> {
-                System.out.println("hi");
-                while (true) {
-                  switch (resultSet.tryNext()) {
-                    case OK:
-                      System.out.println(resultSet.getCurrentRowAsStruct());
-                      break;
-                    case DONE:
-                      System.out.println("DONE");
-                      return AsyncResultSet.CallbackResponse.DONE;
-                    case NOT_READY:
-                      return AsyncResultSet.CallbackResponse.CONTINUE;
-                  }
-                }
-              });
-    }
-    return res;
   }
 }
