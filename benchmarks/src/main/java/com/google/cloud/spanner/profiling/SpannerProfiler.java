@@ -49,7 +49,9 @@ public class SpannerProfiler {
             DatabaseId.of("span-cloud-testing", "sakthi-spanner-testing", "testing-database"));
 
     Stopwatch stopwatch = Stopwatch.createStarted();
-    triggerQuery(databaseClient, "SELECT ID,NAME FROM Employees LIMIT 100");
+    for(int i = 0; i < 100; i++) {
+      triggerQuery(databaseClient, "SELECT ID,NAME FROM Employees LIMIT 100");
+    }
     System.out.println("Total time spent " + stopwatch.elapsed().toMillis());
     TimeUnit.SECONDS.sleep(60);
     spanner.close();
