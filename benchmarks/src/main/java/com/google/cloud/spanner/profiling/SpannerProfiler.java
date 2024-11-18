@@ -16,8 +16,6 @@
 
 package com.google.cloud.spanner.profiling;
 
-import com.google.api.core.ApiFuture;
-import com.google.cloud.spanner.AsyncResultSet;
 import com.google.cloud.spanner.DatabaseClient;
 import com.google.cloud.spanner.DatabaseId;
 import com.google.cloud.spanner.ReadContext;
@@ -27,9 +25,6 @@ import com.google.cloud.spanner.Spanner;
 import com.google.cloud.spanner.SpannerOptions;
 import com.google.cloud.spanner.Statement;
 import com.google.common.base.Stopwatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import org.threeten.bp.Duration;
@@ -56,7 +51,7 @@ public class SpannerProfiler {
     Stopwatch stopwatch = Stopwatch.createStarted();
     triggerQuery(databaseClient, "SELECT ID,NAME FROM Employees LIMIT 100");
     System.out.println("Total time spent " + stopwatch.elapsed().toMillis());
-    TimeUnit.SECONDS.sleep(30);
+    TimeUnit.SECONDS.sleep(60);
     spanner.close();
   }
 
