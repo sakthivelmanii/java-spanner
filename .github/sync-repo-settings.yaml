@@ -7,6 +7,7 @@ branchProtectionRules:
     requiredApprovingReviewCount: 1
     requiresCodeOwnerReviews: true
     requiresStrictStatusChecks: false
+    dismissesStaleReviews: true
     requiredStatusCheckContexts:
       - dependencies (17)
       - lint
@@ -26,6 +27,7 @@ branchProtectionRules:
     requiredApprovingReviewCount: 1
     requiresCodeOwnerReviews: true
     requiresStrictStatusChecks: false
+    dismissesStaleReviews: true
     requiredStatusCheckContexts:
       - dependencies (11)
       - lint
@@ -41,6 +43,7 @@ branchProtectionRules:
     requiredApprovingReviewCount: 1
     requiresCodeOwnerReviews: true
     requiresStrictStatusChecks: false
+    dismissesStaleReviews: true
     requiredStatusCheckContexts:
       - dependencies (11)
       - lint
@@ -56,6 +59,7 @@ branchProtectionRules:
     requiredApprovingReviewCount: 1
     requiresCodeOwnerReviews: true
     requiresStrictStatusChecks: false
+    dismissesStaleReviews: true
     requiredStatusCheckContexts:
       - dependencies (11)
       - lint
@@ -71,6 +75,7 @@ branchProtectionRules:
     requiredApprovingReviewCount: 1
     requiresCodeOwnerReviews: true
     requiresStrictStatusChecks: false
+    dismissesStaleReviews: true
     requiredStatusCheckContexts:
       - lint
       - javadoc
@@ -84,6 +89,7 @@ branchProtectionRules:
     requiredApprovingReviewCount: 1
     requiresCodeOwnerReviews: true
     requiresStrictStatusChecks: false
+    dismissesStaleReviews: true
     requiredStatusCheckContexts:
       - lint
       - javadoc
@@ -99,6 +105,7 @@ branchProtectionRules:
     requiredApprovingReviewCount: 1
     requiresCodeOwnerReviews: true
     requiresStrictStatusChecks: false
+    dismissesStaleReviews: true
     requiredStatusCheckContexts:
       - lint
       - javadoc
@@ -114,6 +121,7 @@ branchProtectionRules:
     requiredApprovingReviewCount: 1
     requiresCodeOwnerReviews: true
     requiresStrictStatusChecks: false
+    dismissesStaleReviews: true
     requiredStatusCheckContexts:
       - lint
       - javadoc
@@ -129,6 +137,7 @@ branchProtectionRules:
     requiredApprovingReviewCount: 1
     requiresCodeOwnerReviews: true
     requiresStrictStatusChecks: false
+    dismissesStaleReviews: true
     requiredStatusCheckContexts:
       - dependencies (17)
       - lint
@@ -145,6 +154,7 @@ branchProtectionRules:
     requiredApprovingReviewCount: 1
     requiresCodeOwnerReviews: true
     requiresStrictStatusChecks: false
+    dismissesStaleReviews: true
     requiredStatusCheckContexts:
       - dependencies (17)
       - lint
